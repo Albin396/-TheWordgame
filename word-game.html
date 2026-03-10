@@ -1,0 +1,1578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>the.word.game</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #151820;
+    --surface2: #1c2030;
+    --border: #252a38;
+    --accent: #4fffb0;
+    --accent2: #ff4f7b;
+    --accent3: #4fa8ff;
+    --text: #e8eaf0;
+    --muted: #5a6070;
+    --warn: #ffb94f;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 16px;
+    background-image:
+      radial-gradient(ellipse 80% 40% at 50% -10%, rgba(79,255,176,0.07) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 30% at 90% 90%, rgba(79,168,255,0.05) 0%, transparent 60%);
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .logo {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+  .logo span { color: var(--accent); }
+
+  .tagline {
+    color: var(--muted);
+    font-size: 0.78rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-top: 6px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 20px;
+    width: 100%;
+    max-width: 940px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+  }
+
+  .card-title {
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* SETUP PANEL */
+  .section-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .btn-group {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .btn-seg {
+    flex: 1;
+    padding: 10px 0;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    border-radius: 8px;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.18s;
+    letter-spacing: 0.04em;
+  }
+  .btn-seg:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-seg.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0d0f14;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .input-field {
+    flex: 1;
+    padding: 11px 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.18s;
+  }
+  .input-field::placeholder { color: var(--muted); }
+  .input-field:focus { border-color: var(--accent); }
+
+  .btn-add {
+    padding: 11px 20px;
+    background: var(--accent);
+    color: #0d0f14;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: opacity 0.18s, transform 0.12s;
+    letter-spacing: 0.04em;
+  }
+  .btn-add:hover { opacity: 0.85; transform: translateY(-1px); }
+  .btn-add:active { transform: translateY(0); }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-top: 1px solid var(--border);
+    margin-top: 4px;
+  }
+  .toggle-label { font-size: 0.85rem; color: var(--text); }
+
+  .toggle {
+    position: relative;
+    width: 44px;
+    height: 24px;
+  }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute;
+    inset: 0;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .slider::before {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    left: 3px;
+    top: 3px;
+    background: var(--muted);
+    border-radius: 50%;
+    transition: transform 0.2s, background 0.2s;
+  }
+  input:checked + .slider { background: rgba(79,255,176,0.2); border-color: var(--accent); }
+  input:checked + .slider::before { transform: translateX(20px); background: var(--accent); }
+
+  .btn-start {
+    width: 100%;
+    padding: 14px;
+    margin-top: 22px;
+    background: linear-gradient(135deg, var(--accent) 0%, #00d4a0 100%);
+    color: #0d0f14;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: 0.06em;
+    transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 4px 24px rgba(79,255,176,0.2);
+  }
+  .btn-start:hover:not(:disabled) { opacity: 0.9; transform: translateY(-2px); box-shadow: 0 8px 32px rgba(79,255,176,0.3); }
+  .btn-start:disabled { opacity: 0.3; cursor: not-allowed; box-shadow: none; }
+
+  /* PLAYERS PANEL */
+  .players-list { display: flex; flex-direction: column; gap: 8px; }
+  .player-chip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.88rem;
+    animation: slideIn 0.2s ease;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .player-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 800;
+    margin-right: 10px;
+    flex-shrink: 0;
+  }
+  .player-info { display: flex; align-items: center; flex: 1; }
+  .player-name { font-weight: 700; }
+  .player-score {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-right: 8px;
+  }
+  .remove-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: color 0.15s;
+  }
+  .remove-btn:hover { color: var(--accent2); }
+
+  .no-players { color: var(--muted); font-size: 0.85rem; font-family: 'Space Mono', monospace; }
+
+  /* RULES */
+  .rules-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .rules-list li {
+    display: flex;
+    gap: 10px;
+    font-size: 0.82rem;
+    color: #8a9aaa;
+    line-height: 1.5;
+  }
+  .rule-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+    margin-top: 6px;
+  }
+
+  /* GAME VIEW */
+  #game-view { display: none; width: 100%; max-width: 940px; }
+
+  .game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  .turn-indicator {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .turn-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    font-weight: 800;
+  }
+  .turn-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+  }
+  .turn-name { font-size: 1.1rem; font-weight: 800; }
+
+  .timer-ring {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    display: none;
+  }
+  .timer-ring.active { display: block; }
+  .timer-ring svg { transform: rotate(-90deg); }
+  .timer-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .scoreboard {
+    display: flex;
+    gap: 12px;
+  }
+  .score-chip {
+    padding: 8px 14px;
+    border-radius: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    text-align: center;
+  }
+  .score-chip.current-turn { border-color: var(--accent); }
+  .score-chip-name { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; font-family: 'Space Mono', monospace; }
+  .score-chip-val { font-size: 1.1rem; font-weight: 800; font-family: 'Space Mono', monospace; }
+
+  .chain-display {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    min-height: 100px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: flex-start;
+    align-content: flex-start;
+  }
+
+  .chain-word {
+    padding: 6px 14px;
+    border-radius: 6px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.82rem;
+    letter-spacing: 0.05em;
+    animation: popIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+  }
+  .chain-word .connecting-letter {
+    color: var(--accent);
+    font-weight: 700;
+  }
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.7); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .chain-arrow {
+    color: var(--muted);
+    font-size: 0.7rem;
+    align-self: center;
+  }
+  .chain-empty { color: var(--muted); font-family: 'Space Mono', monospace; font-size: 0.82rem; }
+
+  .current-letter-hint {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .hint-text { font-size: 0.78rem; color: var(--muted); font-family: 'Space Mono', monospace; }
+  .hint-letter {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: rgba(79,255,176,0.12);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .word-entry {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .word-input {
+    flex: 1;
+    padding: 14px 18px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 1rem;
+    outline: none;
+    letter-spacing: 0.08em;
+    text-transform: lowercase;
+    transition: border-color 0.18s, box-shadow 0.18s;
+  }
+  .word-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,255,176,0.1); }
+  .word-input.error { border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(255,79,123,0.1); animation: shake 0.3s; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+
+  .btn-submit {
+    padding: 14px 24px;
+    background: var(--accent);
+    color: #0d0f14;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: opacity 0.18s, transform 0.12s;
+  }
+  .btn-submit:hover { opacity: 0.85; transform: translateY(-1px); }
+
+  .feedback {
+    min-height: 24px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.05em;
+    padding: 0 2px;
+  }
+  .feedback.ok { color: var(--accent); }
+  .feedback.err { color: var(--accent2); }
+
+  .btn-end-game {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: border-color 0.18s, color 0.18s;
+    margin-top: 12px;
+  }
+  .btn-end-game:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  /* RESULTS VIEW */
+  #results-view { display: none; width: 100%; max-width: 940px; text-align: center; }
+
+  .results-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 48px 36px;
+  }
+  .results-title {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    margin-bottom: 16px;
+  }
+  .winner-name {
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    font-weight: 800;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, var(--accent), #00d4a0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .winner-score { font-family: 'Space Mono', monospace; color: var(--muted); font-size: 0.9rem; margin-bottom: 40px; }
+
+  .final-scores {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 40px;
+  }
+  .final-score-chip {
+    padding: 16px 24px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    min-width: 110px;
+  }
+  .final-score-chip.winner { border-color: var(--accent); box-shadow: 0 0 24px rgba(79,255,176,0.12); }
+  .final-score-chip .fs-name { font-size: 0.78rem; color: var(--muted); font-family: 'Space Mono', monospace; margin-bottom: 6px; }
+  .final-score-chip .fs-val { font-size: 2rem; font-weight: 800; font-family: 'Space Mono', monospace; }
+  .final-score-chip.winner .fs-val { color: var(--accent); }
+
+  .btn-play-again {
+    padding: 14px 40px;
+    background: linear-gradient(135deg, var(--accent), #00d4a0);
+    color: #0d0f14;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: 0.06em;
+    transition: opacity 0.2s, transform 0.15s;
+    box-shadow: 0 4px 24px rgba(79,255,176,0.25);
+  }
+  .btn-play-again:hover { opacity: 0.88; transform: translateY(-2px); }
+
+  /* Confetti canvas */
+  #confetti-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  /* LOGIN VIEW */
+  #login-view {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 70vh;
+    width: 100%;
+    animation: fadeUp 0.5s ease;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .login-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 44px 40px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 8px 48px rgba(0,0,0,0.4);
+  }
+
+  .login-logo {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  .login-logo .logo { font-size: 2rem; }
+  .login-logo .tagline { margin-top: 8px; }
+
+  .login-tabs {
+    display: flex;
+    gap: 0;
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 28px;
+  }
+  .login-tab {
+    flex: 1;
+    padding: 9px 0;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    border-radius: 7px;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.18s;
+    letter-spacing: 0.04em;
+  }
+  .login-tab.active {
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 0 1px 6px rgba(0,0,0,0.3);
+  }
+
+  .login-field { margin-bottom: 16px; }
+  .login-field label {
+    display: block;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    margin-bottom: 8px;
+  }
+  .login-input {
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 0.92rem;
+    outline: none;
+    transition: border-color 0.18s, box-shadow 0.18s;
+  }
+  .login-input::placeholder { color: var(--muted); }
+  .login-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,255,176,0.1); }
+  .login-input.shake { animation: shake 0.3s; border-color: var(--accent2); }
+
+  .login-btn {
+    width: 100%;
+    padding: 13px;
+    margin-top: 8px;
+    background: linear-gradient(135deg, var(--accent) 0%, #00d4a0 100%);
+    color: #0d0f14;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 4px 20px rgba(79,255,176,0.2);
+    margin-bottom: 16px;
+  }
+  .login-btn:hover { opacity: 0.88; transform: translateY(-1px); box-shadow: 0 6px 28px rgba(79,255,176,0.3); }
+
+  .login-msg {
+    text-align: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    min-height: 20px;
+    letter-spacing: 0.04em;
+  }
+  .login-msg.err { color: var(--accent2); }
+  .login-msg.ok { color: var(--accent); }
+
+  .login-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 20px 0;
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.1em;
+  }
+  .login-divider::before, .login-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .guest-btn {
+    width: 100%;
+    padding: 11px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--muted);
+    font-family: 'Syne', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: border-color 0.18s, color 0.18s;
+  }
+  .guest-btn:hover { border-color: var(--accent3); color: var(--accent3); }
+
+  .avatar-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 24px;
+  }
+  .avatar-pick {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    cursor: pointer;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface2);
+    transition: border-color 0.15s, transform 0.12s;
+  }
+  .avatar-pick:hover { transform: scale(1.1); }
+  .avatar-pick.selected { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,255,176,0.2); }
+
+  @keyframes pulse {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0.5; transform: scale(1.1); }
+  }
+
+  @media (max-width: 700px) {
+    .layout { grid-template-columns: 1fr; }
+    .scoreboard { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+<canvas id="confetti-canvas"></canvas>
+
+<header id="header-bar" style="display:none; width:100%; max-width:940px; justify-content:space-between; align-items:center; margin-bottom:32px;">
+  <div>
+    <div class="logo">the<span>.</span>word<span>.</span>game</div>
+    <div class="tagline">real words only · chain · score · win</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-family:'Space Mono',monospace;font-size:0.78rem;color:var(--accent);" id="user-badge"></div>
+    <button onclick="doLogout()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:8px 14px;color:var(--muted);font-family:'Syne',sans-serif;font-size:0.78rem;cursor:pointer;transition:color 0.15s,border-color 0.15s;" onmouseover="this.style.color='var(--accent2)';this.style.borderColor='var(--accent2)'" onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--border)'">Log out</button>
+  </div>
+</header>
+
+<!-- LOGIN VIEW -->
+<div id="login-view">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo">the<span>.</span>word<span>.</span>game</div>
+      <div class="tagline">chain words · outsmart · win</div>
+    </div>
+
+    <div class="login-tabs">
+      <button class="login-tab active" id="tab-login" onclick="switchTab('login')">Sign In</button>
+      <button class="login-tab" id="tab-register" onclick="switchTab('register')">Register</button>
+    </div>
+
+    <!-- Sign In -->
+    <div id="panel-login">
+      <div class="login-field">
+        <label>Username</label>
+        <input class="login-input" id="login-username" placeholder="your username" autocomplete="off" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <div class="login-field">
+        <label>Password</label>
+        <input class="login-input" id="login-password" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="login-btn" onclick="doLogin()">Sign In →</button>
+      <div class="login-msg" id="login-msg"></div>
+      <div class="login-divider">or</div>
+      <button class="guest-btn" onclick="doGuest()">Continue as Guest</button>
+    </div>
+
+    <!-- Register -->
+    <div id="panel-register" style="display:none;">
+      <div class="avatar-row" id="avatar-row">
+        <div class="avatar-pick selected" data-av="🦁" onclick="pickAvatar(this)">🦁</div>
+        <div class="avatar-pick" data-av="🐬" onclick="pickAvatar(this)">🐬</div>
+        <div class="avatar-pick" data-av="🦊" onclick="pickAvatar(this)">🦊</div>
+        <div class="avatar-pick" data-av="🐉" onclick="pickAvatar(this)">🐉</div>
+        <div class="avatar-pick" data-av="🌟" onclick="pickAvatar(this)">🌟</div>
+      </div>
+      <div class="login-field">
+        <label>Username</label>
+        <input class="login-input" id="reg-username" placeholder="choose a username" autocomplete="off" onkeydown="if(event.key==='Enter')doRegister()">
+      </div>
+      <div class="login-field">
+        <label>Password</label>
+        <input class="login-input" id="reg-password" type="password" placeholder="create a password" onkeydown="if(event.key==='Enter')doRegister()">
+      </div>
+      <div class="login-field">
+        <label>Confirm Password</label>
+        <input class="login-input" id="reg-confirm" type="password" placeholder="repeat password" onkeydown="if(event.key==='Enter')doRegister()">
+      </div>
+      <button class="login-btn" onclick="doRegister()">Create Account →</button>
+      <div class="login-msg" id="reg-msg"></div>
+      <div class="login-divider">or</div>
+      <button class="guest-btn" onclick="doGuest()">Continue as Guest</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETUP VIEW -->
+<div id="setup-view" class="layout">
+  <!-- Left: Settings -->
+  <div class="card">
+    <div class="card-title">Game Settings</div>
+
+    <div class="section-label">Mode</div>
+    <div class="btn-group" id="mode-group">
+      <button class="btn-seg active" data-mode="local" onclick="setMode('local',this)">Local</button>
+      <button class="btn-seg" data-mode="vs-ai" onclick="setMode('vs-ai',this)">vs AI</button>
+    </div>
+
+    <div class="section-label">Add Player</div>
+    <div class="input-row">
+      <input class="input-field" id="player-name-input" placeholder="Enter player name" maxlength="20" onkeydown="if(event.key==='Enter') addPlayer()">
+      <button class="btn-add" onclick="addPlayer()">Add</button>
+    </div>
+
+    <div class="section-label">Word Length</div>
+    <div class="btn-group" id="length-group">
+      <button class="btn-seg" data-len="3" onclick="setLength(3,this)">3</button>
+      <button class="btn-seg active" data-len="4" onclick="setLength(4,this)">4</button>
+      <button class="btn-seg" data-len="5" onclick="setLength(5,this)">5</button>
+    </div>
+
+    <div class="toggle-row">
+      <span class="toggle-label">Turn Timer (15s)</span>
+      <label class="toggle">
+        <input type="checkbox" id="timer-toggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="toggle-row">
+      <span class="toggle-label">Game Clock (90s total)</span>
+      <label class="toggle">
+        <input type="checkbox" id="game-clock-toggle" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <button class="btn-start" id="start-btn" onclick="startGame()" disabled>Start Game</button>
+  </div>
+
+  <!-- Right: Players + Rules -->
+  <div style="display:flex;flex-direction:column;gap:16px;">
+    <div class="card">
+      <div class="card-title">Players</div>
+      <div class="players-list" id="players-list">
+        <span class="no-players">No players added yet</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Rules</div>
+      <ul class="rules-list">
+        <li><span class="rule-dot"></span><span>Players take turns entering words of the chosen length.</span></li>
+        <li><span class="rule-dot"></span><span>Each word must start with the last letter of the previous word.</span></li>
+        <li><span class="rule-dot"></span><span>Words cannot be repeated during the game.</span></li>
+        <li><span class="rule-dot"></span><span>Score 1 point per valid word.</span></li>
+        <li><span class="rule-dot"></span><span>If the timer is on, you must answer before time runs out.</span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- GAME VIEW -->
+<div id="game-view">
+
+  <!-- 90s Game Clock Bar -->
+  <div id="game-clock-bar" style="display:none; margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <span style="font-family:'Space Mono',monospace;font-size:0.68rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);">Game Clock</span>
+      <span id="game-clock-text" style="font-family:'Space Mono',monospace;font-size:1.1rem;font-weight:700;color:var(--accent);">1:30</span>
+    </div>
+    <div style="height:6px;background:var(--surface2);border-radius:4px;overflow:hidden;border:1px solid var(--border);">
+      <div id="game-clock-bar-fill" style="height:100%;width:100%;background:linear-gradient(90deg,var(--accent),#00d4a0);border-radius:4px;transition:width 1s linear,background 0.5s;"></div>
+    </div>
+  </div>
+
+  <div class="game-header">
+    <div class="turn-indicator">
+      <div class="turn-avatar" id="turn-avatar"></div>
+      <div>
+        <div class="turn-label">Current Turn</div>
+        <div class="turn-name" id="turn-name"></div>
+      </div>
+    </div>
+    <div class="timer-ring" id="timer-ring">
+      <svg width="52" height="52">
+        <circle cx="26" cy="26" r="22" fill="none" stroke="#252a38" stroke-width="3"/>
+        <circle id="timer-circle" cx="26" cy="26" r="22" fill="none" stroke="#4fffb0" stroke-width="3"
+          stroke-dasharray="138.2" stroke-dashoffset="0" stroke-linecap="round"/>
+      </svg>
+      <div class="timer-text" id="timer-text">15</div>
+    </div>
+    <div class="scoreboard" id="scoreboard"></div>
+  </div>
+
+  <div class="chain-display" id="chain-display">
+    <span class="chain-empty" id="chain-empty">Enter any real word to start the chain!</span>
+  </div>
+
+  <div class="current-letter-hint" id="letter-hint" style="display:none;">
+    <span class="hint-text">Word must start with</span>
+    <span class="hint-letter" id="hint-letter">?</span>
+  </div>
+
+  <div class="word-entry">
+    <input class="word-input" id="word-input" placeholder="type any real word…" autocomplete="off" onkeydown="if(event.key==='Enter') submitWord()">
+    <button class="btn-submit" onclick="submitWord()">Submit →</button>
+  </div>
+  <div class="feedback" id="feedback"></div>
+  <button class="btn-end-game" onclick="endGame()">End Game & See Results</button>
+</div>
+
+<!-- RESULTS VIEW -->
+<div id="results-view">
+  <div class="results-card">
+    <div class="results-title">🏆 Game Over</div>
+    <div class="winner-name" id="winner-name"></div>
+    <div class="winner-score" id="winner-score"></div>
+    <div class="final-scores" id="final-scores"></div>
+    <button class="btn-play-again" onclick="playAgain()">Play Again</button>
+  </div>
+</div>
+
+<script>
+// ---- State ----
+const COLORS = ['#4fffb0','#4fa8ff','#ff4f7b','#ffb94f','#c47aff','#ff7a4f'];
+let players = [];
+let wordLength = 4;
+let useTimer = false;
+let gameMode = 'local';
+
+let chain = [];
+let usedWords = new Set();
+let currentPlayerIdx = 0;
+let timerInterval = null;
+let timerSeconds = 15;
+let timerRemaining = 15;
+let useGameClock = true;
+let gameClockTotal = 90;
+let gameClockRemaining = 90;
+let gameClockInterval = null;
+
+// ---- Setup ----
+function setMode(mode, btn) {
+  gameMode = mode;
+  document.querySelectorAll('#mode-group .btn-seg').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function setLength(len, btn) {
+  wordLength = len;
+  document.querySelectorAll('#length-group .btn-seg').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function addPlayer() {
+  const input = document.getElementById('player-name-input');
+  const name = input.value.trim();
+  if (!name) return;
+  if (players.length >= 6) { showSetupMsg('Max 6 players'); return; }
+  if (players.find(p => p.name.toLowerCase() === name.toLowerCase())) { showSetupMsg('Name already added'); return; }
+
+  players.push({ name, score: 0, color: COLORS[players.length % COLORS.length] });
+  input.value = '';
+  renderPlayers();
+  document.getElementById('start-btn').disabled = players.length < (gameMode === 'vs-ai' ? 1 : 2);
+  // If vs AI and 1 human
+  if (gameMode === 'vs-ai') document.getElementById('start-btn').disabled = players.length < 1;
+}
+
+function renderPlayers() {
+  const list = document.getElementById('players-list');
+  if (!players.length) {
+    list.innerHTML = '<span class="no-players">No players added yet</span>';
+    return;
+  }
+  list.innerHTML = players.map((p, i) => `
+    <div class="player-chip">
+      <div class="player-info">
+        <div class="player-avatar" style="background:${p.color}22;color:${p.color}">${p.name[0].toUpperCase()}</div>
+        <div class="player-name">${p.name}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span class="player-score">${p.score} pts</span>
+        <button class="remove-btn" onclick="removePlayer(${i})">✕</button>
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('start-btn').disabled =
+    (gameMode === 'local' && players.length < 2) ||
+    (gameMode === 'vs-ai' && players.length < 1);
+}
+
+function removePlayer(i) {
+  players.splice(i, 1);
+  renderPlayers();
+}
+
+function showSetupMsg(msg) {
+  // flash near input
+  const input = document.getElementById('player-name-input');
+  input.placeholder = msg;
+  setTimeout(() => input.placeholder = 'Enter player name', 1500);
+}
+
+// ---- Game Start ----
+function startGame() {
+  useTimer = document.getElementById('timer-toggle').checked;
+  useGameClock = document.getElementById('game-clock-toggle').checked;
+  // Add AI player if needed
+  if (gameMode === 'vs-ai') {
+    players.push({ name: 'Claude AI', score: 0, color: COLORS[players.length % COLORS.length], isAI: true });
+  }
+  chain = [];
+  usedWords = new Set();
+  currentPlayerIdx = 0;
+  players.forEach(p => p.score = 0);
+
+  document.getElementById('setup-view').style.display = 'none';
+  document.getElementById('game-view').style.display = 'block';
+
+  // Start 90s game clock
+  if (useGameClock) {
+    gameClockRemaining = gameClockTotal;
+    document.getElementById('game-clock-bar').style.display = 'block';
+    updateGameClockDisplay();
+    gameClockInterval = setInterval(() => {
+      gameClockRemaining--;
+      updateGameClockDisplay();
+      if (gameClockRemaining <= 0) {
+        clearInterval(gameClockInterval);
+        clearInterval(timerInterval);
+        showFeedback('⏰ Time\'s up! Game over!', 'err');
+        setTimeout(endGame, 1200);
+      }
+    }, 1000);
+  } else {
+    document.getElementById('game-clock-bar').style.display = 'none';
+  }
+
+  renderScoreboard();
+  renderChain();
+  updateTurnUI();
+  document.getElementById('word-input').focus();
+}
+
+// ---- Game UI ----
+function updateGameClockDisplay() {
+  const mins = Math.floor(gameClockRemaining / 60);
+  const secs = gameClockRemaining % 60;
+  const text = `${mins}:${secs.toString().padStart(2,'0')}`;
+  const clockText = document.getElementById('game-clock-text');
+  const fill = document.getElementById('game-clock-bar-fill');
+  const pct = (gameClockRemaining / gameClockTotal) * 100;
+
+  clockText.textContent = text;
+  fill.style.width = pct + '%';
+
+  if (gameClockRemaining <= 10) {
+    clockText.style.color = 'var(--accent2)';
+    fill.style.background = 'var(--accent2)';
+    clockText.style.animation = 'pulse 0.5s infinite alternate';
+  } else if (gameClockRemaining <= 30) {
+    clockText.style.color = 'var(--warn)';
+    fill.style.background = 'linear-gradient(90deg,var(--warn),#ffda4f)';
+    clockText.style.animation = '';
+  } else {
+    clockText.style.color = 'var(--accent)';
+    fill.style.background = 'linear-gradient(90deg,var(--accent),#00d4a0)';
+    clockText.style.animation = '';
+  }
+}
+
+function renderScoreboard() {
+  const sb = document.getElementById('scoreboard');
+  sb.innerHTML = players.map((p, i) => `
+    <div class="score-chip ${i === currentPlayerIdx ? 'current-turn' : ''}">
+      <div class="score-chip-name">${p.name}</div>
+      <div class="score-chip-val" style="color:${p.color}">${p.score}</div>
+    </div>
+  `).join('');
+}
+
+function updateTurnUI() {
+  const p = players[currentPlayerIdx];
+  const avatar = document.getElementById('turn-avatar');
+  avatar.textContent = p.name[0].toUpperCase();
+  avatar.style.background = p.color + '22';
+  avatar.style.color = p.color;
+  document.getElementById('turn-name').textContent = p.name;
+
+  if (chain.length > 0) {
+    const lastLetter = chain[chain.length - 1].slice(-1).toUpperCase();
+    document.getElementById('letter-hint').style.display = 'flex';
+    document.getElementById('hint-letter').textContent = lastLetter;
+  } else {
+    document.getElementById('letter-hint').style.display = 'none';
+  }
+
+  if (useTimer) {
+    document.getElementById('timer-ring').classList.add('active');
+    startTimer();
+  }
+
+  if (p.isAI) {
+    setTimeout(doAITurn, 1200);
+  } else {
+    const input = document.getElementById('word-input');
+    input.value = '';
+    input.focus();
+  }
+}
+
+function startTimer() {
+  clearInterval(timerInterval);
+  timerRemaining = timerSeconds;
+  updateTimerDisplay();
+  timerInterval = setInterval(() => {
+    timerRemaining--;
+    updateTimerDisplay();
+    if (timerRemaining <= 0) {
+      clearInterval(timerInterval);
+      showFeedback('⏰ Time\'s up! Next player…', 'err');
+      setTimeout(nextTurn, 1000);
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const circle = document.getElementById('timer-circle');
+  const text = document.getElementById('timer-text');
+  const circumference = 138.2;
+  const pct = timerRemaining / timerSeconds;
+  circle.style.strokeDashoffset = circumference * (1 - pct);
+  circle.style.stroke = timerRemaining <= 5 ? '#ff4f7b' : '#4fffb0';
+  text.textContent = timerRemaining;
+  text.style.color = timerRemaining <= 5 ? '#ff4f7b' : 'var(--text)';
+}
+
+function renderChain() {
+  const display = document.getElementById('chain-display');
+  const empty = document.getElementById('chain-empty');
+  if (!chain.length) {
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  const words = chain.map((w, i) => {
+    const html = i === 0
+      ? `<span>${w.slice(0, -1)}<span class="connecting-letter">${w.slice(-1)}</span></span>`
+      : `<span><span class="connecting-letter">${w[0]}</span>${w.slice(1, -1)}<span class="connecting-letter">${w.slice(-1)}</span></span>`;
+    return (i > 0 ? `<span class="chain-arrow">→</span>` : '') +
+      `<div class="chain-word">${html}</div>`;
+  }).join('');
+  display.innerHTML = `<span id="chain-empty" style="display:none"></span>` + words;
+  display.scrollLeft = display.scrollWidth;
+}
+
+function showFeedback(msg, type) {
+  const fb = document.getElementById('feedback');
+  fb.textContent = msg;
+  fb.className = 'feedback ' + type;
+}
+
+// ---- Dictionary API Validation ----
+const checkedWords = {}; // cache: word -> true/false
+
+async function isRealWord(word) {
+  if (word in checkedWords) return checkedWords[word];
+  try {
+    const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+    checkedWords[word] = res.ok;
+    return res.ok;
+  } catch {
+    // Network error - show a message but don't silently allow
+    checkedWords[word] = false;
+    return false;
+  }
+}
+
+// Common English words for AI player (all verified real words)
+const AI_WORDS = [
+  'able','area','army','back','ball','band','bank','base','bath','bear',
+  'beat','been','bell','best','bird','bite','blow','blue','boat','body',
+  'bold','bolt','bond','bone','book','boom','born','both','bowl','burn',
+  'cake','call','calm','came','camp','card','care','cart','case','cash',
+  'cast','cave','cell','chat','chip','city','clam','clap','clay','clip',
+  'club','coal','coat','code','coil','cold','come','cook','cool','cope',
+  'cord','cork','corn','cost','cozy','crop','cube','cure','curl','cute',
+  'dale','dame','damp','dare','dark','dart','dash','data','dawn','deal',
+  'dear','deck','deed','deep','deny','desk','dial','dice','diet','dime',
+  'dine','dire','disk','dive','dock','dome','done','doom','door','dose',
+  'dove','down','draw','drip','drop','drum','dual','duel','dune','dusk',
+  'dust','duty','each','earl','earn','east','edge','emit','envy','epic',
+  'even','evil','exam','face','fact','fade','fail','fair','fall','fame',
+  'fang','farm','fast','fate','fawn','fear','feat','feel','fell','felt',
+  'fern','file','fill','film','find','fine','fire','firm','fish','fist',
+  'flag','flat','flaw','flew','flip','flow','foam','fold','fond','font',
+  'fool','ford','fork','form','fort','fowl','free','frog','fuel','full',
+  'fury','gale','game','gape','gate','gave','gaze','germ','gift','gild',
+  'give','glad','glee','glow','glue','goal','gold','gone','gown','grab',
+  'gray','grid','grim','grin','grip','grit','grow','gulf','gull','gust',
+  'hack','hail','half','hall','halt','hand','hang','harm','harp','haul',
+  'hawk','heal','heap','heat','heel','helm','help','herb','hero','hide',
+  'high','hill','hint','hole','home','hood','hoot','hope','horn','hose',
+  'idle','inch','iris','isle','jade','jest','join','joke','jolt','jump',
+  'just','keen','kick','kill','kind','king','kiss','kite','knob','knot',
+  'lack','lake','lamb','lame','lamp','lane','lark','lash','lawn','lead',
+  'leaf','leak','lean','leap','left','lend','lens','levy','lime','line',
+  'link','lion','list','loan','lock','loft','lone','long','loom','loop',
+  'lore','lose','lost','loud','love','lure','lurk','lush','lust','made',
+  'maid','mail','main','make','mall','malt','mane','mark','mash','mast',
+  'mate','maze','meal','mean','meat','melt','mend','menu','mild','mile',
+  'mill','mind','mine','mint','mire','miss','mist','mode','mole','mood',
+  'moor','mope','more','much','muse','myth','nail','name','need','nick',
+  'node','norm','note','oval','oven','pack','page','pail','pair','pale',
+  'palm','pang','park','part','past','path','pave','pawn','peak','pear',
+  'peel','peer','pelt','pest','pick','pier','pile','pill','pine','pink',
+  'pint','pipe','pity','plan','play','plea','plot','ploy','plum','poem',
+  'pole','poll','pond','pore','port','pose','post','prey','prod','prop',
+  'puck','puff','pull','pump','pure','push','race','rack','rage','rail',
+  'rain','ramp','rank','rash','rate','rave','read','real','reap','rear',
+  'reel','rend','rent','rest','rice','rich','ride','rife','ring','riot',
+  'rise','risk','road','roam','roar','robe','rock','rode','role','roll',
+  'roof','room','rope','rose','rove','ruin','rule','ruse','rush','rust',
+  'safe','sage','sail','sake','sale','salt','same','sand','sane','save',
+  'seal','seam','sear','seed','seek','self','sell','send','shed','ship',
+  'show','shut','silk','sing','sink','slow','slug','snap','snow','sock',
+  'soft','soil','sold','sole','sore','sort','soul','sour','span','spin',
+  'spit','spot','star','stay','step','stir','stop','suit','sung','surf',
+  'swap','tail','tale','tame','task','teak','teal','tear','tell','tend',
+  'tent','test','tick','tide','tilt','time','tire','toad','toil','toll',
+  'tomb','tone','torn','toss','tour','town','trap','trim','trip','trot',
+  'true','tuck','tuft','turf','turn','twin','type','urge','vain','vale',
+  'vane','veil','vein','vest','vice','vine','void','volt','wade','wage',
+  'wail','wake','walk','wand','wane','ward','ware','wave','weak','wean',
+  'weep','welt','wide','wild','wilt','wily','wind','wine','wing','wink',
+  'wise','wish','woke','word','wore','work','worm','wrap','wren','year',
+  'yell','yoga','zero','zone','zoom',
+  'abbey','abuse','acted','admin','admit','adopt','adult','after','again',
+  'agent','agree','ahead','alarm','album','alert','alike','align','aloft',
+  'alter','angel','anger','angle','angry','ankle','annex','anvil','apple',
+  'apply','arena','argue','arise','armor','aroma','arrow','asset','atlas',
+  'atone','attic','audio','avail','avoid','awake','award','aware','awful',
+  'basic','basis','beach','beard','beast','began','begin','being','below',
+  'beset','black','blade','blame','bland','blast','blaze','blind','blink',
+  'block','blood','blown','blunt','blush','board','bonus','boost','bound',
+  'brain','brave','bread','break','breed','brick','bride','brief','brisk',
+  'broad','broom','brown','budge','build','built','burst','candy','cargo',
+  'carry','cease','chalk','chase','cheap','check','cheek','cheer','china',
+  'chunk','class','clean','clear','click','cliff','climb','cling','cloak',
+  'close','cloud','coach','coast','coral','count','court','cover','crack',
+  'craft','crane','crash','crawl','crazy','cream','crest','crowd','crown',
+  'crumb','crush','cycle','dairy','dance','daunt','debut','decoy','dense',
+  'depot','depth','devil','dirty','dizzy','dodge','draft','drain','drape',
+  'dream','drove','drown','dying','eager','eagle','early','eight','elite',
+  'ember','empty','enemy','enjoy','enter','entry','erase','every','exact',
+  'exist','exile','extra','fable','fairy','faith','false','fancy','flair',
+  'flank','flare','flash','flesh','flock','flood','floor','flour','flute',
+  'focus','force','forge','forth','forty','found','front','frost','frown',
+  'fruit','giant','glare','gleam','glide','globe','gloom','grace','grand',
+  'grasp','greed','greet','grief','groan','groom','group','grove','grown',
+  'gruff','guise','gusto','hedge','hello','herbs','hoist','holly','honor',
+  'horse','hotel','hound','house','hover','human','humor','hurry','ideal',
+  'image','imply','inner','input','irony','joint','judge','juice','juicy',
+  'jumpy','knack','knife','knock','known','label','lance','large','laser',
+  'later','laugh','layer','learn','leave','legal','lemon','level','lever',
+  'light','limit','linen','liver','local','lodge','logic','loose','lower',
+  'loyal','lucid','lucky','lunar','lying','magic','major','manor','maple',
+  'march','match','mayor','means','mercy','merit','might','minor','minus',
+  'model','money','month','moral','motto','mound','mouse','mouth','music',
+  'naive','nasty','naval','night','noble','noise','north','nutty','nymph',
+  'ocean','offer','often','opera','optic','orbit','organ','outer','ozone',
+  'paint','panic','paper','party','patch','pause','peace','peach','pearl',
+  'penny','peril','phase','phone','photo','piano','piece','pilot','pitch',
+  'place','plain','plant','plate','plaza','plead','pluck','plume','point',
+  'poise','power','press','price','pride','prime','print','prism','prize',
+  'prone','proof','prose','proud','prove','pulse','purse','quest','quick',
+  'quiet','quota','quote','raise','rally','ranch','range','rapid','ratio',
+  'reach','ready','realm','rebel','reign','relax','reply','rider','ridge',
+  'right','risky','rival','river','robot','rocky','roost','rough','round',
+  'route','royal','ruler','rural','rusty','saint','satin','savvy','scene',
+  'scope','score','scout','sense','serve','seven','shade','shaft','shake',
+  'shame','shape','share','sharp','shelf','shell','shift','shine','shirt',
+  'shore','short','shout','sight','since','skill','skirt','skull','slate',
+  'slave','sleek','sleep','slice','slide','slope','small','smart','smash',
+  'smell','smile','snake','snare','sneak','solar','solve','sorry','south',
+  'space','spare','spark','spear','speed','spend','spice','spike','spire',
+  'spoke','sport','stack','stage','stain','stair','stake','stale','stall',
+  'stare','stark','start','state','steam','steel','steep','steer','stern',
+  'stiff','still','stone','stood','storm','stout','straw','stray','strut',
+  'study','style','suite','super','surge','swing','sword','table','talon',
+  'taste','taunt','teach','tense','thank','theme','thick','thing','think',
+  'thorn','three','threw','throw','tiger','tight','tired','title','touch',
+  'tough','tower','toxic','track','trade','trail','train','trait','tread',
+  'treat','trial','tribe','trick','troop','trout','truck','truly','trunk',
+  'trust','truth','tulip','twice','uncle','until','upper','upset','usher',
+  'valid','value','valve','vapor','vault','verse','viral','vital','video',
+  'vigor','visit','voice','voter','waltz','waste','watch','water','weary',
+  'weird','wheat','while','white','whole','wider','widow','windy','witch',
+  'witty','woman','world','worry','worse','worst','worth','would','wound',
+  'wrath','write','wrong','wrote','yacht','yearn','young','youth'
+];
+
+// ---- Submit Word ----
+async function submitWord() {
+  const input = document.getElementById('word-input');
+  const word = input.value.trim().toLowerCase();
+
+  // Quick sync checks first
+  if (!word) { showFeedback('✗ Enter a word first.', 'err'); return; }
+  if (!/^[a-z]+$/.test(word)) { showFeedback('✗ Letters only.', 'err'); return; }
+  if (usedWords.has(word)) { input.classList.add('error'); showFeedback('✗ Already used!', 'err'); setTimeout(() => input.classList.remove('error'), 600); return; }
+  if (chain.length > 0) {
+    const required = chain[chain.length - 1].slice(-1);
+    if (word[0] !== required) {
+      input.classList.add('error');
+      showFeedback(`✗ Must start with "${required.toUpperCase()}".`, 'err');
+      setTimeout(() => input.classList.remove('error'), 600);
+      return;
+    }
+  }
+
+  // Dictionary check
+  const btn = document.querySelector('.btn-submit');
+  btn.textContent = '…';
+  btn.disabled = true;
+  showFeedback('🔍 Checking dictionary…', 'ok');
+
+  const valid = await isRealWord(word);
+  btn.textContent = 'Submit →';
+  btn.disabled = false;
+
+  if (!valid) {
+    input.classList.add('error');
+    showFeedback(`✗ "${word.toUpperCase()}" — not found in dictionary!`, 'err');
+    setTimeout(() => input.classList.remove('error'), 600);
+    return;
+  }
+
+  clearInterval(timerInterval);
+  chain.push(word);
+  usedWords.add(word);
+  players[currentPlayerIdx].score++;
+  renderChain();
+  renderScoreboard();
+  showFeedback('✓ ' + word.toUpperCase() + ' accepted!', 'ok');
+  input.value = '';
+  input.classList.remove('error');
+  setTimeout(() => { showFeedback('', ''); nextTurn(); }, 800);
+}
+
+function nextTurn() {
+  currentPlayerIdx = (currentPlayerIdx + 1) % players.length;
+  renderScoreboard();
+  updateTurnUI();
+}
+
+// ---- AI Turn ----
+async function doAITurn() {
+  const requiredStart = chain.length > 0 ? chain[chain.length - 1].slice(-1) : null;
+
+  const candidates = AI_WORDS.filter(w =>
+    !usedWords.has(w) &&
+    (!requiredStart || w[0] === requiredStart)
+  );
+
+  if (candidates.length > 0) {
+    const word = candidates[Math.floor(Math.random() * candidates.length)];
+    showFeedback('🤖 AI is thinking…', 'ok');
+    setTimeout(() => {
+      document.getElementById('word-input').value = word;
+      submitWord();
+    }, 1000);
+  } else {
+    showFeedback('🤖 AI couldn\'t find a word! Skipping…', 'err');
+    setTimeout(nextTurn, 1200);
+  }
+}
+
+// ---- End Game ----
+function endGame() {
+  clearInterval(timerInterval);
+  clearInterval(gameClockInterval);
+  document.getElementById('game-view').style.display = 'none';
+  document.getElementById('results-view').style.display = 'block';
+
+  const sorted = [...players].sort((a, b) => b.score - a.score);
+  const winner = sorted[0];
+  const tie = sorted.filter(p => p.score === winner.score).length > 1;
+  const timeUsed = gameClockTotal - gameClockRemaining;
+  const timeTxt = useGameClock ? ` · ${timeUsed}s used` : '';
+
+  document.getElementById('winner-name').textContent = tie ? 'It\'s a Tie!' : winner.name + ' Wins!';
+  document.getElementById('winner-score').textContent =
+    (tie ? `${winner.score} points each` : `${winner.score} point${winner.score !== 1 ? 's' : ''}`) + timeTxt;
+
+  document.getElementById('final-scores').innerHTML = sorted.map((p, i) => `
+    <div class="final-score-chip ${i === 0 && !tie ? 'winner' : ''}">
+      <div class="fs-name">${p.name}</div>
+      <div class="fs-val" style="color:${p.color}">${p.score}</div>
+    </div>
+  `).join('');
+
+  if (!tie) startConfetti();
+}
+
+function playAgain() {
+  stopConfetti();
+  players = players.filter(p => !p.isAI);
+  players.forEach(p => p.score = 0);
+  chain = [];
+  usedWords = new Set();
+  currentPlayerIdx = 0;
+  document.getElementById('results-view').style.display = 'none';
+  document.getElementById('setup-view').style.display = 'grid';
+  renderPlayers();
+  document.getElementById('start-btn').disabled = false;
+}
+
+// ---- Confetti ----
+let confettiAnimId = null;
+function startConfetti() {
+  const canvas = document.getElementById('confetti-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const pieces = Array.from({length: 120}, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * -canvas.height,
+    w: Math.random() * 10 + 4,
+    h: Math.random() * 6 + 3,
+    color: COLORS[Math.floor(Math.random() * COLORS.length)],
+    speed: Math.random() * 3 + 1.5,
+    angle: Math.random() * Math.PI * 2,
+    spin: (Math.random() - 0.5) * 0.2,
+    drift: (Math.random() - 0.5) * 1.5,
+  }));
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    pieces.forEach(p => {
+      p.y += p.speed;
+      p.x += p.drift;
+      p.angle += p.spin;
+      if (p.y > canvas.height + 20) { p.y = -20; p.x = Math.random() * canvas.width; }
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.angle);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = 0.85;
+      ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      ctx.restore();
+    });
+    confettiAnimId = requestAnimationFrame(draw);
+  }
+  draw();
+}
+function stopConfetti() {
+  cancelAnimationFrame(confettiAnimId);
+  const canvas = document.getElementById('confetti-canvas');
+  canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+}
+
+// ---- Login / Auth ----
+let currentUser = null;
+let selectedAvatar = '🦁';
+// Simple in-memory "user database"
+const userDB = {};
+
+function switchTab(tab) {
+  document.getElementById('panel-login').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('panel-register').style.display = tab === 'register' ? 'block' : 'none';
+  document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+  document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+}
+
+function pickAvatar(el) {
+  document.querySelectorAll('.avatar-pick').forEach(a => a.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedAvatar = el.dataset.av;
+}
+
+function doLogin() {
+  const u = document.getElementById('login-username').value.trim();
+  const p = document.getElementById('login-password').value;
+  const msg = document.getElementById('login-msg');
+  if (!u || !p) { showLoginMsg(msg, 'Fill in all fields.', 'err'); return; }
+  if (!userDB[u]) { showLoginMsg(msg, 'User not found. Register first!', 'err'); shakeInput('login-username'); return; }
+  if (userDB[u].password !== p) { showLoginMsg(msg, 'Wrong password.', 'err'); shakeInput('login-password'); return; }
+  currentUser = { name: u, avatar: userDB[u].avatar };
+  showLoginMsg(msg, `Welcome back, ${u}! ✓`, 'ok');
+  setTimeout(enterGame, 700);
+}
+
+function doRegister() {
+  const u = document.getElementById('reg-username').value.trim();
+  const p = document.getElementById('reg-password').value;
+  const c = document.getElementById('reg-confirm').value;
+  const msg = document.getElementById('reg-msg');
+  if (!u || !p || !c) { showLoginMsg(msg, 'Fill in all fields.', 'err'); return; }
+  if (u.length < 3) { showLoginMsg(msg, 'Username must be 3+ chars.', 'err'); shakeInput('reg-username'); return; }
+  if (p.length < 4) { showLoginMsg(msg, 'Password must be 4+ chars.', 'err'); shakeInput('reg-password'); return; }
+  if (p !== c) { showLoginMsg(msg, 'Passwords don\'t match.', 'err'); shakeInput('reg-confirm'); return; }
+  if (userDB[u]) { showLoginMsg(msg, 'Username taken.', 'err'); shakeInput('reg-username'); return; }
+  userDB[u] = { password: p, avatar: selectedAvatar };
+  currentUser = { name: u, avatar: selectedAvatar };
+  showLoginMsg(msg, `Account created! Welcome, ${u}! ✓`, 'ok');
+  setTimeout(enterGame, 700);
+}
+
+function doGuest() {
+  const num = Math.floor(Math.random() * 9000) + 1000;
+  currentUser = { name: `Guest${num}`, avatar: '👤' };
+  enterGame();
+}
+
+function showLoginMsg(el, text, type) {
+  el.textContent = text;
+  el.className = 'login-msg ' + type;
+}
+
+function shakeInput(id) {
+  const el = document.getElementById(id);
+  el.classList.add('shake');
+  setTimeout(() => el.classList.remove('shake'), 400);
+}
+
+function enterGame() {
+  // Pre-fill player 1 with logged-in user
+  players = [
+    { name: currentUser.avatar + ' ' + currentUser.name, score: 0, color: COLORS[0] },
+    { name: 'Player 2', score: 0, color: COLORS[1] },
+  ];
+
+  document.getElementById('login-view').style.display = 'none';
+  document.getElementById('setup-view').style.display = 'grid';
+  document.getElementById('header-bar').style.display = 'flex';
+  document.getElementById('user-badge').textContent = currentUser.avatar + ' ' + currentUser.name;
+  renderPlayers();
+  document.getElementById('start-btn').disabled = false;
+}
+
+// Show login view on load — hide everything else
+document.getElementById('setup-view').style.display = 'none';
+document.getElementById('game-view').style.display = 'none';
+document.getElementById('results-view').style.display = 'none';
+document.getElementById('header-bar').style.display = 'none';
+
+function doLogout() {
+  stopConfetti();
+  clearInterval(timerInterval);
+  clearInterval(gameClockInterval);
+  currentUser = null;
+  players = [];
+  chain = [];
+  usedWords = new Set();
+  document.getElementById('game-view').style.display = 'none';
+  document.getElementById('setup-view').style.display = 'none';
+  document.getElementById('results-view').style.display = 'none';
+  document.getElementById('header-bar').style.display = 'none';
+  document.getElementById('login-view').style.display = 'flex';
+  document.getElementById('login-username').value = '';
+  document.getElementById('login-password').value = '';
+  document.getElementById('login-msg').textContent = '';
+}
+
+</script>
+</body>
+</html>
